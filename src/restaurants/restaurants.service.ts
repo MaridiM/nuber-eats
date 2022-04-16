@@ -1,22 +1,29 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
+import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
+import { Injectable } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
 import { CreateRestaurantDto } from './dto/create-restaurant.dto'
 import { Restaurant } from './entities/restaurant.entity'
-import { RestaurantService } from './restaurants.resolver'
 
-@Resolver(() => Restaurant)
-export class RestaurantResolver {
-    constructor(private readonly restaurantService: RestaurantService) {}
+@Injectable()
+export class RestaurantService {
+    constructor(
+        @InjectRepository(Restaurant)
+        private readonly restaurants: Repository<Restaurant>,
+    ) {}
 
-    @Query(() => [Restaurant])
-    restaurants(): Promise<Restaurant[]> {
-        return this.restaurantService.getAll()
+    getAll(): Promise<Restaurant[]> {
+        return this.restaurants.find()
     }
 
-    @Mutation(() => Boolean)
     createRestaurant(
-        @Args() createRestaurantDto: CreateRestaurantDto,
-    ): boolean {
-        console.log(createRestaurantDto)
-        return true
+        createRestaurantDto: CreateRestaurantDto,
+    ): Promise<Restaurant> {
+        const newRestaurant = this.restaurants.create(createRestaurantDto)
+        return this.restaurants.save(newRestaurant)
+    }
+
+    updateRestaurant({ id, data }: UpdateRestaurantDto) {
+        return this.restaurants.update(id, { ...data })
     }
 }
