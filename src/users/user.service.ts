@@ -6,6 +6,7 @@ import { CreateAccountInput } from './dto/create-account.dto'
 import { LoginInput } from './dto/login.dto'
 import { User } from './entities/user.entity'
 import { ConfigService } from '@nestjs/config'
+import { JwtService } from 'src/jwt/jwt.service'
 
 type TUserResponse = {
     ok: boolean
@@ -18,6 +19,7 @@ export class UsersService {
     constructor(
         @InjectRepository(User) private readonly users: Repository<User>,
         private readonly config: ConfigService, // imported into user module
+        private readonly jwtService: JwtService, // Custom service
     ) {}
 
     async createAccount({ email, password, role }: CreateAccountInput): Promise<TUserResponse> {
@@ -67,7 +69,8 @@ export class UsersService {
                     error: 'Wrong password',
                 }
             }
-            const token = jwt.sign({ id: user.id }, this.config.get('SECRET_KEY'))
+            const token = this.jwtService.sign({ id: user.id }) // Make JWT token custom jwt module
+
             return {
                 ok: true,
                 token,
@@ -78,5 +81,9 @@ export class UsersService {
                 error,
             }
         }
+    }
+
+    async findById(id: number): Promise<User> {
+        return this.users.findOne({ where: { id } })
     }
 }
