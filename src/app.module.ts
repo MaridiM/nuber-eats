@@ -11,7 +11,9 @@ import { CommonModule } from './common/common.module'
 import { User } from './users/entities/user.entity'
 import { JwtModule } from './jwt/jwt.module'
 import { JwtMiddleware } from './jwt/jwt.middleware'
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './auth/auth.module'
+import { Verification } from './users/entities/verification.entity'
+import { MailModule } from './mail/mail.module';
 
 @Module({
     imports: [
@@ -38,7 +40,7 @@ import { AuthModule } from './auth/auth.module';
             database: process.env.DB_NAME,
             synchronize: process.env.NODE_ENV !== 'prod',
             logging: process.env.NODE_ENV !== 'prod',
-            entities: [User],
+            entities: [User, Verification],
         }),
         GraphQLModule.forRoot<ApolloDriverConfig>({
             driver: ApolloDriver,
@@ -52,6 +54,7 @@ import { AuthModule } from './auth/auth.module';
             privateKey: process.env.PRIVATE_KEY, // Using for creating token on jwt.service
         }),
         AuthModule,
+        MailModule,
     ],
     controllers: [],
     providers: [],
