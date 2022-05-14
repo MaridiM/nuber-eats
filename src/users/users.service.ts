@@ -4,11 +4,11 @@ import { Repository } from 'typeorm'
 import { CreateAccountInput } from './dto/create-account.dto'
 import { LoginInput } from './dto/login.dto'
 import { User } from './entities/user.entity'
-import { ConfigService } from '@nestjs/config'
 import { JwtService } from 'src/jwt/jwt.service'
 import { UpdateProfileInput } from './dto/update-profile.dto'
 import { Verification } from './entities/verification.entity'
 import { VerifyEmailOutput } from './dto/verify-email.dto'
+import { MailService } from 'src/mail/mail.service'
 
 type TUserResponse = {
     ok: boolean
@@ -21,8 +21,8 @@ export class UsersService {
     constructor(
         @InjectRepository(User) private readonly users: Repository<User>,
         @InjectRepository(Verification) private readonly verifications: Repository<Verification>,
-        private readonly config: ConfigService, // imported into user module
         private readonly jwtService: JwtService, // Custom service
+        private readonly mailService: MailService, // Custom service
     ) {}
 
     async createAccount({ email, password, role }: CreateAccountInput): Promise<TUserResponse> {
@@ -40,7 +40,9 @@ export class UsersService {
 
             //Create and Save id DB
             const user = await this.users.save(this.users.create({ email, password, role }))
-            await this.verifications.save(this.verifications.create({ user }))
+            const verification = await this.verifications.save(this.verifications.create({ user }))
+
+            await this.mailService.sendVerificationEmail(user.email, verification.code)
 
             return { ok: true }
         } catch (error) {
@@ -96,12 +98,15 @@ export class UsersService {
     }
 
     async updateProfile(userId: number, { email, password }: UpdateProfileInput) {
+        console.log(userId, 'ID USER')
         const user = await this.users.findOne({ where: { id: userId } })
-        console.log(user)
         if (email) {
             user.email = email
             user.verified = false
-            await this.verifications.save(this.verifications.create({ user }))
+
+            await this.verifications.delete({ user: { id: user.id } })
+            const verification = await this.verifications.save(this.verifications.create({ user }))
+            await this.mailService.sendVerificationEmail(user.email, verification.code)
         }
         if (password) {
             user.password = password

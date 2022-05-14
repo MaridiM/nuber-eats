@@ -13,7 +13,7 @@ import { JwtModule } from './jwt/jwt.module'
 import { JwtMiddleware } from './jwt/jwt.middleware'
 import { AuthModule } from './auth/auth.module'
 import { Verification } from './users/entities/verification.entity'
-import { MailModule } from './mail/mail.module';
+import { MailModule } from './mail/mail.module'
 
 @Module({
     imports: [
@@ -29,6 +29,9 @@ import { MailModule } from './mail/mail.module';
                 DB_PASSWORDS: Joi.string().required(),
                 DB_NAME: Joi.string().required(),
                 PRIVATE_KEY: Joi.string().required(),
+                MAILGUN_API_KEY: Joi.string().required(),
+                MAILGUN_DOMAIN_NAME: Joi.string().required(),
+                MAILGUN_FROM_MAIL: Joi.string().required(),
             }),
         }),
         TypeOrmModule.forRoot({
@@ -54,7 +57,11 @@ import { MailModule } from './mail/mail.module';
             privateKey: process.env.PRIVATE_KEY, // Using for creating token on jwt.service
         }),
         AuthModule,
-        MailModule,
+        MailModule.forRoot({
+            apiKey: process.env.MAILGUN_API_KEY,
+            domain: process.env.MAILGUN_DOMAIN_NAME,
+            formEmail: process.env.MAILGUN_FROM_MAIL,
+        }),
     ],
     controllers: [],
     providers: [],

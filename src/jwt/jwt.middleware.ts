@@ -1,6 +1,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common'
 import { NextFunction, Request, Response } from 'express'
-import { UsersService } from 'src/users/user.service'
+import { UsersService } from 'src/users/users.service'
 import { JwtService } from './jwt.service'
 
 // Middleware for authorisation,  set on app.module
